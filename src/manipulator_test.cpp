@@ -24,8 +24,10 @@ int main(){
 
 	Eigen::MatrixXd joint_angle(7,1);
 	joint_angle << 90, 0, 45, 0, 0, 0, 0;
-	ma.fkine(joint_angle);
-	std::cout << ma.jacob(joint_angle) <<std::endl;
+//	std::cout << ma.jacob(joint_angle) <<std::endl;
+	Eigen::MatrixXd goal_position(1, 3);
+	goal_position << -0.1498, -0.4, -0.2697;
+	std::cout << ma.ikine(goal_position) <<std::endl;
 }
 
 

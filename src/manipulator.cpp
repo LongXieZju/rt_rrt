@@ -78,47 +78,48 @@ Eigen::MatrixXd manipulator::fkine(Eigen::MatrixXd joint_angle){
 			        0,         sin(alpha),         cos(alpha),       d,
 			        0,            0,                 0,              1;
 		T = T*T_temp;
-//		std::cout << T <<std::endl;
-//		std::cout << T.block(0,3,3,1) <<std::endl;
 		if(i == 3){
 			joint_position.row(2) = T.block(0,3,3,1).transpose();
 		}
 	}
 	joint_position.row(3) = T.block(0,3,3,1).transpose();
-//	std::cout << T <<std::endl;
-//	std::cout << "Joint position: " <<std::endl;
-//	std::cout << joint_position <<std::endl;
 	return joint_position;
 }
 
 Eigen::MatrixXd manipulator::ikine(Eigen::MatrixXd goal_position){
 	float lamda = 0.2;           // damping constant
 	float stol = 1e-3;           // tolerance
-	int nm_error = 100;        // initial error
+	float nm_error = 100;        // initial error
 	int count = 0;             // iteration count
 	int ilimit = 1000;         // maximum iteration
+	Eigen::MatrixXd end_position;
+	Eigen::MatrixXd error;
+	Eigen::MatrixXd jacob;
+	Eigen::MatrixXd jacob_t;
+	Eigen::MatrixXd A;
+	Eigen::MatrixXd B = Eigen::MatrixXd::Zero(6, 1);
+	Eigen::MatrixXd I = Eigen::MatrixXd::Identity(6, 6);
+	Eigen::MatrixXd f;
+
 	Eigen::MatrixXd joint_angle(7,1);
 	joint_angle << 0, 0, 0, M_PI/2, 0, M_PI/2, 0;
 	while(nm_error > stol){
-		Eigen::MatrixXd end_position = manipulator::fkine(joint_angle).row(3);
-		Eigen::MatrixXd error = goal_position - end_position;
-
+		end_position = manipulator::fkine(joint_angle).row(3);
+		error = goal_position - end_position;
+		B.block(0,0,3,1) = error.transpose();
+		jacob = manipulator::jacob(joint_angle);
+		jacob_t = jacob.transpose();
+		A = jacob*jacob_t + lamda*lamda * I;
+		f = A.lu().solve(B);
+		joint_angle = joint_angle + jacob_t * f;
+		nm_error = error.norm();
+		count += 1;
+		if(count > ilimit){
+			std::cout<< "Solution wouldn't converge" << std::endl;
+			break;
+		}
 	}
-//	while nm_error > stol
-//	                end_position = this.model.fkine(joint_angle);
-//	                end_position = end_position.t;
-//	                error = goal_position - end_position;
-//	                jacob = this.model.jacob0(joint_angle);
-//	                f = linsolve(jacob*jacob' + lamda^2 * eye(size(this.model.links, 2) - 1), [error; 0; 0; 0]);
-//	                d_joint_angle = jacob' * f;
-//	                joint_angle = joint_angle + d_joint_angle;
-//	                nm_error = norm(error);
-//	                count = count + 1;
-//	                if count > ilimit
-//	                    disp('Solution wouldn''t converge');
-//	                    break;
-//	                end
-//	            end
+	return joint_angle;
 }
 
 
