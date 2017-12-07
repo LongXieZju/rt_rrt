@@ -9,7 +9,7 @@
 #include <math.h>
 #include <eigen3/Eigen/Geometry>
 
-#include "../src/manipulator.h"
+#include "../header/manipulator.h"
 
 //int main(){
 //	Eigen::MatrixXd manipulator_dh(7,4);

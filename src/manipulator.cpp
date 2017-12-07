@@ -9,7 +9,7 @@
 #include <math.h>
 #include <eigen3/Eigen/Geometry>
 
-#include "manipulator.h"
+#include "../header/manipulator.h"
 
 manipulator::manipulator(Eigen::MatrixXd dh_param){
 	Eigen::MatrixXd q_init = Eigen::MatrixXd::Zero(7,1);

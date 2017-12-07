@@ -4,82 +4,45 @@
  *  Created on: 2017年12月7日
  *      Author: xielong
  */
-// Copyright 2006-2017 Coppelia Robotics GmbH. All rights reserved.
-// marc@coppeliarobotics.com
-// www.coppeliarobotics.com
-//
-// -------------------------------------------------------------------
-// THIS FILE IS DISTRIBUTED "AS IS", WITHOUT ANY EXPRESS OR IMPLIED
-// WARRANTY. THE USER WILL USE IT AT HIS/HER OWN RISK. THE ORIGINAL
-// AUTHORS AND COPPELIA ROBOTICS GMBH WILL NOT BE LIABLE FOR DATA LOSS,
-// DAMAGES, LOSS OF PROFITS OR ANY OTHER KIND OF LOSS WHILE USING OR
-// MISUSING THIS SOFTWARE.
-//
-// You are free to use/modify/distribute this file for whatever purpose!
-// -------------------------------------------------------------------
-//
-// This file was automatically created for V-REP release V3.4.0 rev. 1 on April 5th 2017
-
-// Make sure to have the server side running in V-REP!
-// Start the server from a child script with following command:
-// simExtRemoteApiStart(portNumber) -- starts a remote API server service on the specified port
-
-// Copyright 2006-2017 Coppelia Robotics GmbH. All rights reserved.
-// marc@coppeliarobotics.com
-// www.coppeliarobotics.com
-//
-// -------------------------------------------------------------------
-// THIS FILE IS DISTRIBUTED "AS IS", WITHOUT ANY EXPRESS OR IMPLIED
-// WARRANTY. THE USER WILL USE IT AT HIS/HER OWN RISK. THE ORIGINAL
-// AUTHORS AND COPPELIA ROBOTICS GMBH WILL NOT BE LIABLE FOR DATA LOSS,
-// DAMAGES, LOSS OF PROFITS OR ANY OTHER KIND OF LOSS WHILE USING OR
-// MISUSING THIS SOFTWARE.
-//
-// You are free to use/modify/distribute this file for whatever purpose!
-// -------------------------------------------------------------------
-//
-// This file was automatically created for V-REP release V3.4.0 rev. 1 on April 5th 2017
-
-// Make sure to have the server side running in V-REP!
-// Start the server from a child script with following command:
-// simExtRemoteApiStart(portNumber) -- starts a remote API server service on the specified port
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
+#include <eigen3/Eigen/Geometry>
 
-extern "C" {
-    #include "extApi.h"
-	#include "extApi.c"
-	#include "extApiPlatform.c"
-}
+#include "../header/VREP.h"
+#include "../header/VREP_arm.h"
+
+//extern "C" {
+//    #include "extApi.h"
+//	#include "extApi.c"
+//	#include "extApiPlatform.c"
+//}
 
 int main()
 {
-    int Port = 19997;
-    int PositionControlHandle;
-    simxChar* Adresse = "127.0.0.1";
-    float position[3];
+    VREP v;
+    v.connect();
+    if(v.clientID == -1)
+    		return 0;
+    int h = v.getHandle("goal");
 
+    VREP_arm arm("goal", v.clientID, v.mode);
 
-    int clientID = simxStart(Adresse, Port, true,true,2000,5);
+    	clock_t start = clock();
+    	arm.getPosition();
+    	clock_t ends = clock();
+    	std::cout <<"Running Time : "<<(double)(ends - start)/ CLOCKS_PER_SEC << std::endl;
 
-    if (clientID != -1)
-    {
-        printf("V-rep connected.");
-        extApi_sleepMs(300);
-        while (simxGetConnectionId(clientID) != -1)
-        {
-            simxGetObjectHandle(clientID,"IRB140_manipulationSphere", &PositionControlHandle, simx_opmode_oneshot);
-            simxGetObjectPosition(clientID,PositionControlHandle,-1,position, simx_opmode_oneshot);
-            printf("(%f,%f,%f)\r\n",position[0],position[1],position[2]);
-        }
+    	std::cout <<"**********************************************************"<< std::endl;
 
-        simxFinish(clientID);
-    }
-    else {
-        printf("V-rep can't be connected.");
-        extApi_sleepMs(300);
-    }
+    	float joint[] = {M_PI/2, 0, 0,  0,  0,  0,  0};
+    	clock_t startgetPosition = clock();
+    	arm.setJointPos(joint);
+    	clock_t endsgetPosition = clock();
+    	std::cout <<"Running Time : "<<(double)(endsgetPosition - startgetPosition)/ CLOCKS_PER_SEC << std::endl;
+
+    	std::cout <<"**********************************************************"<< std::endl;
 
     return 0;
 }
