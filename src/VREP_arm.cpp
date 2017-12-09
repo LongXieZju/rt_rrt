@@ -34,8 +34,14 @@ Eigen::MatrixXd VREP_arm::getPosition(){
 	return position;
 }
 
-void VREP_arm::setJointPos(float *joint){
+void VREP_arm::setJointPos(float* joint){
 	for(int i = 0; i < VREP_arm::link_num; i++){
 		VREP::setJointPos(VREP_arm::link_handle[i], joint[i]);
+	}
+}
+
+void VREP_arm::setJointPos(Eigen::MatrixXd joint){
+	for(int i = 0; i < VREP_arm::link_num; i++){
+		VREP::setJointPos(VREP_arm::link_handle[i], joint(i, 0));
 	}
 }

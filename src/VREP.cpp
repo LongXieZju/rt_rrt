@@ -15,13 +15,14 @@ extern "C" {
 }
 
 void VREP::connect(){
-	simxChar* Adresse = "127.0.0.1";
+//	simxChar* Adresse = "127.0.0.1";
 	int Port = 19997;
 	VREP::mode = simx_opmode_oneshot_wait;
-	VREP::clientID = simxStart(Adresse, Port, true,true,2000,5);
+	VREP::clientID = simxStart("127.0.0.1", Port, true,true,2000,5);
 	if(VREP::clientID != -1){
 		std::cout << "V-rep connected" << std::endl;
 	}else{
+		std::cout << "Can not connect V-rep" << std::endl;
 		throw("Can not connect V-rep");
 	}
 }
@@ -46,6 +47,7 @@ int VREP::getHandle(const char* name){
 	int handle;
 	int s = simxGetObjectHandle(VREP::clientID, name, &handle, VREP::mode);
 	if(s != 0){
+		std::cout << "Can not get handle: "<< name << std::endl;
 		throw("Can not get handle: %s", name);
 	}
 	return handle;
@@ -55,6 +57,7 @@ Eigen::MatrixXd VREP::getPosition(int handle){
 	float position[3];
 	int s = simxGetObjectPosition(VREP::clientID, handle, -1, position, VREP::mode);
 	if(s != 0){
+		std::cout << "Can not get Position" << std::endl;
 		throw("Can not get Position");
 	}
 	Eigen::MatrixXd result(3,1);

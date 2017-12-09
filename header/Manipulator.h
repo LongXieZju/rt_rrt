@@ -9,6 +9,7 @@
 #define MANIPULATOR_H_
 
 #include "../header/Struct.h"
+#include <stack>
 
 class Manipulator{
 private:
@@ -25,7 +26,8 @@ public:
 	float arm_radius;
 	float goal_bais;
 	float node_max_step;
-	float obs_radius[3] = {0.11, 0.1, 0.07};
+	float obs_radius[3] = {0.11, 0.12, 0.07};
+	std::stack<int> back_trace;
 
 	Eigen::MatrixXd goal_position;
 	Eigen::MatrixXd goal_angle;
@@ -34,8 +36,9 @@ public:
 	Eigen::MatrixXd min_ang;
 
 	Eigen::MatrixXd tree;
-//	Eigen::MatrixXd;
-//	Eigen::MatrixXd;
+	Eigen::MatrixXd parent;
+	Eigen::MatrixXd children;
+	Eigen::MatrixXd sum_cost;
 public:
 	Manipulator(Eigen::MatrixXd dh_param);
 	void setJointAngle(Eigen::MatrixXd q);
@@ -55,6 +58,10 @@ public:
 	NearestNode getNearestNode(Eigen::MatrixXd node);
 	Eigen::MatrixXd getNeighbors(Eigen::MatrixXd new_node, int nearest_node_ind);
 	int obstacle_collision(Eigen::MatrixXd new_node, int nearest_node_ind, Eigen::MatrixXd obs_position);
+	int obstacle_collision(Eigen::MatrixXd new_node, Eigen::MatrixXd goal_node, Eigen::MatrixXd obs_position);
+	float link_obstacle_collision(Eigen::MatrixXd P1, Eigen::MatrixXd P2, Eigen::MatrixXd obstacle);
+	int insert_node(Eigen::MatrixXd new_node, int nearest_node_ind);
+	void find_path(int new_node_ind);
 };
 
 #endif /* MANIPULATOR_H_ */

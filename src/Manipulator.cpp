@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <math.h>
+//#include <stack>
 #include <eigen3/Eigen/Geometry>
 
 #include "../header/Manipulator.h"
@@ -24,10 +25,13 @@ Manipulator::Manipulator(Eigen::MatrixXd dh_param){
 	Manipulator::node_max_step = 0.0462; // sqrt(sum(((1 * pi / 180)*ones(7, 1)).^2))
 
 	Manipulator::max_ang = 130*M_PI/180 * Eigen::MatrixXd::Ones(Manipulator::link_num, 1);
-	Manipulator::min_ang = -30*M_PI/180 * Eigen::MatrixXd::Ones(Manipulator::link_num, 1);
-	Manipulator::arm_radius = 0.03;
+	Manipulator::min_ang = -45*M_PI/180 * Eigen::MatrixXd::Ones(Manipulator::link_num, 1);
+	Manipulator::arm_radius = 0.06;
 
 	Manipulator::tree = Eigen::MatrixXd::Zero(Manipulator::link_num, Manipulator::max_iter);
+	Manipulator::parent = Eigen::MatrixXd::Zero(1, Manipulator::max_iter);
+	Manipulator::children = Eigen::MatrixXd::Zero(1, Manipulator::max_iter);
+	Manipulator::sum_cost = Eigen::MatrixXd::Zero(1, Manipulator::max_iter);
 }
 
 void Manipulator::setJointAngle(Eigen::MatrixXd joint_angle){
@@ -88,7 +92,6 @@ Eigen::MatrixXd Manipulator::jacob(Eigen::MatrixXd joint_angle){
 Eigen::MatrixXd Manipulator::fkine(Eigen::MatrixXd joint_angle){
 	Eigen::MatrixXd joint_position(3,4);
 	joint_position.col(0) << 0, 0, 0.20386;
-//	joint_position.col(1) << 0, 0, 0.20386;
 	Eigen::MatrixXd dh = Manipulator::getDhParam();
 	Eigen::Matrix4Xd T = Eigen::Matrix4Xd::Identity(4,4);
 	for(int i = 0; i < joint_angle.rows(); i++){
@@ -103,13 +106,13 @@ Eigen::MatrixXd Manipulator::fkine(Eigen::MatrixXd joint_angle){
 			        0,            0,                 0,              1;
 		T = T*T_temp;
 		if(i == 3){
-			joint_position.col(1) = T.block(0,3,3,1).transpose();
+			joint_position.col(1) = T.block(0,3,3,1);
 		}
 		if(i == 5){
-			joint_position.col(2) = T.block(0,3,3,1).transpose();
+			joint_position.col(2) = T.block(0,3,3,1);
 		}
 	}
-	joint_position.col(3) = T.block(0,3,3,1).transpose();
+	joint_position.col(3) = T.block(0,3,3,1);
 	return joint_position;
 }
 
@@ -163,7 +166,9 @@ Eigen::Matrix4Xd Manipulator::transMatrix (Eigen::MatrixXd link, float q){
 
 Eigen::MatrixXd Manipulator::sampleNode(){
 	Eigen::MatrixXd state;
-	if(rand() < Manipulator::goal_bais){
+//	std::cout << "****rand_node****" << std::endl;
+//	std::cout << (double)rand()/RAND_MAX << std::endl;
+	if((double)rand()/RAND_MAX < Manipulator::goal_bais){
 		state = Manipulator::goal_angle;
 	}else{
 		Eigen::MatrixXd step = Manipulator::max_ang - Manipulator::min_ang;
@@ -202,8 +207,8 @@ Eigen::MatrixXd Manipulator::steer(Eigen::MatrixXd new_node, int nearest_node_in
 	Eigen::MatrixXd from = Manipulator::tree.col(nearest_node_ind);
 	Eigen::MatrixXd angle_diff = new_node - from;
 	Eigen::MatrixXd steer_node = from + angle_diff / angle_diff.norm() * Manipulator::node_max_step;
-	std::cout << "****steer_node****" << std::endl;
-	std::cout << steer_node << std::endl;
+//	std::cout << "****steer_node****" << std::endl;
+//	std::cout << steer_node << std::endl;
 	return steer_node;
 }
 
@@ -216,14 +221,86 @@ int Manipulator::obstacle_collision(Eigen::MatrixXd new_node, int nearest_node_i
 
 	Eigen::MatrixXd state_angle;
 	Eigen::MatrixXd joint_position;
+	Eigen::MatrixXd ob_dist(Manipulator::obstacle_num, 1);
+	int collision;
 	for(int i = 0; i < Manipulator::obstacle_num; i++){
 		for(int j = 1; j <= Manipulator::step_div; j++){
 			state_angle = nearest_node + j*step*vector;
 			joint_position = Manipulator::fkine(state_angle);
+			ob_dist(0,0) = Manipulator::link_obstacle_collision(joint_position.col(0), joint_position.col(1), obs_position.col(i));
+			ob_dist(1,0) = Manipulator::link_obstacle_collision(joint_position.col(1), joint_position.col(2), obs_position.col(i));
+			ob_dist(2,0) = Manipulator::link_obstacle_collision(joint_position.col(2), joint_position.col(3), obs_position.col(i));
+//			std::cout << "****obs_dist****" << std::endl;
+//			std::cout << ob_dist.minCoeff() - Manipulator::arm_radius - Manipulator::obs_radius[i] << std::endl;
+			collision = collision = (ob_dist.minCoeff() - Manipulator::arm_radius - Manipulator::obs_radius[i]) > 0;
+			if(!collision){
+				return collision;
+			}
 		}
-
 	}
-	return 1;
+	return collision;
 }
 
+float Manipulator::link_obstacle_collision(Eigen::MatrixXd P1, Eigen::MatrixXd P2, Eigen::MatrixXd obstacle){
+	Eigen::MatrixXd a1 = obstacle - P1;
+	Eigen::MatrixXd a2 = P2 - P1;
+	Eigen::MatrixXd close_P(3, 1);
+	float k = (a1 * a2.transpose())(0,0) / a2.norm();
+//	float k = 0;
+	if(k <= 0){
+		close_P = P1;
+	}else if(k >= 1){
+		close_P = P2;
+	}else{
+		close_P = P1 + k * a2;
+	}
+	float ob_dist = (close_P - obstacle).norm();
+	return ob_dist;
+}
 
+int Manipulator::insert_node(Eigen::MatrixXd new_node, int nearest_node_ind){
+	Manipulator::tree.col(Manipulator::node_added) = new_node;
+	Manipulator::parent(0, Manipulator::node_added) = nearest_node_ind;
+	Manipulator::children(0, nearest_node_ind) += 1;
+	Manipulator::sum_cost(0, Manipulator::node_added) = Manipulator::sum_cost(0, nearest_node_ind)
+											+ (new_node - Manipulator::tree.col(nearest_node_ind)).norm();
+	Manipulator::node_added += 1;
+	return Manipulator::node_added-1;
+}
+
+int Manipulator::obstacle_collision(Eigen::MatrixXd new_node, Eigen::MatrixXd nearest_node, Eigen::MatrixXd obs_position){
+	Eigen::MatrixXd dist_temp = new_node - nearest_node;
+	double dist = dist_temp.norm();
+	Eigen::MatrixXd vector = dist_temp/dist;
+	double step = dist / Manipulator::step_div;
+
+	Eigen::MatrixXd state_angle;
+	Eigen::MatrixXd joint_position;
+	Eigen::MatrixXd ob_dist(Manipulator::obstacle_num, 1);
+	int collision;
+	for(int i = 0; i < Manipulator::obstacle_num; i++){
+		for(int j = 1; j <= Manipulator::step_div; j++){
+			state_angle = nearest_node + j*step*vector;
+			joint_position = Manipulator::fkine(state_angle);
+			ob_dist(0,0) = Manipulator::link_obstacle_collision(joint_position.col(0), joint_position.col(1), obs_position.col(i));
+			ob_dist(1,0) = Manipulator::link_obstacle_collision(joint_position.col(1), joint_position.col(2), obs_position.col(i));
+			ob_dist(2,0) = Manipulator::link_obstacle_collision(joint_position.col(2), joint_position.col(3), obs_position.col(i));
+			collision = (ob_dist.minCoeff() - Manipulator::arm_radius - Manipulator::obs_radius[i]) > 0;
+			if(!collision){
+				return collision;
+			}
+		}
+	}
+	return collision;
+}
+
+void Manipulator::find_path(int nearest_node_index){
+	int current_index = nearest_node_index;
+	int path_iter = 0;
+	while(current_index != 0 ){
+		Manipulator::back_trace.push(current_index);
+		path_iter = path_iter + 1;
+		current_index = Manipulator::parent(current_index, 0);
+	}
+	Manipulator::back_trace.push(current_index);
+}

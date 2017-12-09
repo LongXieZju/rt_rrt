@@ -18,6 +18,7 @@ public:
 	VREP_arm(const char* name, int clientID, int mode);
 	Eigen::MatrixXd getPosition();
 	void setJointPos(float *joint);
+	void setJointPos(Eigen::MatrixXd joint);
 };
 
 
