@@ -57,10 +57,10 @@ Eigen::MatrixXd VREP::getPosition(int handle){
 	if(s != 0){
 		throw("Can not get Position");
 	}
-	Eigen::MatrixXd result(1,3);
+	Eigen::MatrixXd result(3,1);
 	result(0,0) = position[0];
-	result(0,1) = position[1];
-	result(0,2) = position[2];
+	result(1,0) = position[1];
+	result(2,0) = position[2];
 	return result;
 }
 
