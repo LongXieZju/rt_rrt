@@ -25,6 +25,21 @@ Eigen::MatrixXd getObstaclesPos(int* obstacles, VREP v){
 int main(){
 //	srand((unsigned)time(0));  //random sample differently every time
 
+	///test
+	Eigen::MatrixXd A(3,2);
+	A << -2,2,3,4,5,6;
+	Eigen::MatrixXd B(3,2);
+	B << 0,0,0,0,0,0;
+	Eigen::MatrixXd C;
+	C = (A.array()>0).select(A,0);
+//	C.select(A, 0);
+	Eigen::MatrixXd D;
+	std::cout <<  C << std::endl;
+	std::cout <<  ((A.array() == 3).select(A, B)) << std::endl;
+	std::cout << "********" << std::endl;
+	std::cout <<  (A.array() > 0).matrix()(1,1) << std::endl;
+	///
+
 	// Manipulator model, contains forward and backward kinematics models
 	Eigen::MatrixXd manipulator_dh(7,4);
 	manipulator_dh <<  0, 0.20386, 0, M_PI/2,
@@ -68,12 +83,7 @@ int main(){
 	NearestNode nearest_node;
 	int new_node_ind;
 
-	///test
-//	Eigen::MatrixXd A(3,2);
-//	A << -2,2,3,4,5,6;
-//	int adad = A.minCoeff() > 0;
-//	std::cout << adad << std::endl;
-	///
+
 	clock_t start_jacob = clock();
 	int count = 0;
 	for(int i = 0; i < seven_arm.max_iter; i++){
@@ -83,12 +93,12 @@ int main(){
 		if(nearest_node.nearest_dist > seven_arm.node_max_step){
 			new_node = seven_arm.steer(new_node, nearest_node.ind);
 		}
-		if(seven_arm.obstacle_collision(new_node, nearest_node.ind, obs_position)){
-			new_node_ind = seven_arm.insert_node(new_node, nearest_node.ind);
+		if(seven_arm.obstacleCollision(new_node, nearest_node.ind, obs_position)){
+			new_node_ind = seven_arm.insertNode(new_node, nearest_node.ind);
 			if((new_node - seven_arm.goal_angle).norm() < seven_arm.node_max_step){
-				if(seven_arm.obstacle_collision(new_node, seven_arm.goal_angle, obs_position)){
+				if(seven_arm.obstacleCollision(new_node, seven_arm.goal_angle, obs_position)){
 					std::cout << "Find path" << std::endl;
-					seven_arm.find_path(new_node_ind);
+					seven_arm.findPath(new_node_ind);
 					break;
 				}
 			}

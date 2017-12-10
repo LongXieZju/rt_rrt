@@ -212,7 +212,7 @@ Eigen::MatrixXd Manipulator::steer(Eigen::MatrixXd new_node, int nearest_node_in
 	return steer_node;
 }
 
-int Manipulator::obstacle_collision(Eigen::MatrixXd new_node, int nearest_node_ind, Eigen::MatrixXd obs_position){
+int Manipulator::obstacleCollision(Eigen::MatrixXd new_node, int nearest_node_ind, Eigen::MatrixXd obs_position){
 	Eigen::MatrixXd nearest_node = Manipulator::tree.col(nearest_node_ind);
 	Eigen::MatrixXd dist_temp = new_node - nearest_node;
 	double dist = dist_temp.norm();
@@ -227,9 +227,9 @@ int Manipulator::obstacle_collision(Eigen::MatrixXd new_node, int nearest_node_i
 		for(int j = 1; j <= Manipulator::step_div; j++){
 			state_angle = nearest_node + j*step*vector;
 			joint_position = Manipulator::fkine(state_angle);
-			ob_dist(0,0) = Manipulator::link_obstacle_collision(joint_position.col(0), joint_position.col(1), obs_position.col(i));
-			ob_dist(1,0) = Manipulator::link_obstacle_collision(joint_position.col(1), joint_position.col(2), obs_position.col(i));
-			ob_dist(2,0) = Manipulator::link_obstacle_collision(joint_position.col(2), joint_position.col(3), obs_position.col(i));
+			ob_dist(0,0) = Manipulator::linkObstacleCollision(joint_position.col(0), joint_position.col(1), obs_position.col(i));
+			ob_dist(1,0) = Manipulator::linkObstacleCollision(joint_position.col(1), joint_position.col(2), obs_position.col(i));
+			ob_dist(2,0) = Manipulator::linkObstacleCollision(joint_position.col(2), joint_position.col(3), obs_position.col(i));
 //			std::cout << "****obs_dist****" << std::endl;
 //			std::cout << ob_dist.minCoeff() - Manipulator::arm_radius - Manipulator::obs_radius[i] << std::endl;
 			collision = collision = (ob_dist.minCoeff() - Manipulator::arm_radius - Manipulator::obs_radius[i]) > 0;
@@ -241,7 +241,7 @@ int Manipulator::obstacle_collision(Eigen::MatrixXd new_node, int nearest_node_i
 	return collision;
 }
 
-float Manipulator::link_obstacle_collision(Eigen::MatrixXd P1, Eigen::MatrixXd P2, Eigen::MatrixXd obstacle){
+float Manipulator::linkObstacleCollision(Eigen::MatrixXd P1, Eigen::MatrixXd P2, Eigen::MatrixXd obstacle){
 	Eigen::MatrixXd a1 = obstacle - P1;
 	Eigen::MatrixXd a2 = P2 - P1;
 	Eigen::MatrixXd close_P(3, 1);
@@ -258,7 +258,7 @@ float Manipulator::link_obstacle_collision(Eigen::MatrixXd P1, Eigen::MatrixXd P
 	return ob_dist;
 }
 
-int Manipulator::insert_node(Eigen::MatrixXd new_node, int nearest_node_ind){
+int Manipulator::insertNode(Eigen::MatrixXd new_node, int nearest_node_ind){
 	Manipulator::tree.col(Manipulator::node_added) = new_node;
 	Manipulator::parent(0, Manipulator::node_added) = nearest_node_ind;
 	Manipulator::children(0, nearest_node_ind) += 1;
@@ -268,7 +268,7 @@ int Manipulator::insert_node(Eigen::MatrixXd new_node, int nearest_node_ind){
 	return Manipulator::node_added-1;
 }
 
-int Manipulator::obstacle_collision(Eigen::MatrixXd new_node, Eigen::MatrixXd nearest_node, Eigen::MatrixXd obs_position){
+int Manipulator::obstacleCollision(Eigen::MatrixXd new_node, Eigen::MatrixXd nearest_node, Eigen::MatrixXd obs_position){
 	Eigen::MatrixXd dist_temp = new_node - nearest_node;
 	double dist = dist_temp.norm();
 	Eigen::MatrixXd vector = dist_temp/dist;
@@ -282,9 +282,9 @@ int Manipulator::obstacle_collision(Eigen::MatrixXd new_node, Eigen::MatrixXd ne
 		for(int j = 1; j <= Manipulator::step_div; j++){
 			state_angle = nearest_node + j*step*vector;
 			joint_position = Manipulator::fkine(state_angle);
-			ob_dist(0,0) = Manipulator::link_obstacle_collision(joint_position.col(0), joint_position.col(1), obs_position.col(i));
-			ob_dist(1,0) = Manipulator::link_obstacle_collision(joint_position.col(1), joint_position.col(2), obs_position.col(i));
-			ob_dist(2,0) = Manipulator::link_obstacle_collision(joint_position.col(2), joint_position.col(3), obs_position.col(i));
+			ob_dist(0,0) = Manipulator::linkObstacleCollision(joint_position.col(0), joint_position.col(1), obs_position.col(i));
+			ob_dist(1,0) = Manipulator::linkObstacleCollision(joint_position.col(1), joint_position.col(2), obs_position.col(i));
+			ob_dist(2,0) = Manipulator::linkObstacleCollision(joint_position.col(2), joint_position.col(3), obs_position.col(i));
 			collision = (ob_dist.minCoeff() - Manipulator::arm_radius - Manipulator::obs_radius[i]) > 0;
 			if(!collision){
 				return collision;
@@ -294,7 +294,7 @@ int Manipulator::obstacle_collision(Eigen::MatrixXd new_node, Eigen::MatrixXd ne
 	return collision;
 }
 
-void Manipulator::find_path(int nearest_node_index){
+void Manipulator::findPath(int nearest_node_index){
 	int current_index = nearest_node_index;
 	int path_iter = 0;
 	while(current_index != 0 ){
@@ -304,3 +304,4 @@ void Manipulator::find_path(int nearest_node_index){
 	}
 	Manipulator::back_trace.push(current_index);
 }
+

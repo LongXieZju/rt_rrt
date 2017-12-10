@@ -57,11 +57,11 @@ public:
 	Eigen::MatrixXd steer(Eigen::MatrixXd new_node, int nearest_node_ind);
 	NearestNode getNearestNode(Eigen::MatrixXd node);
 	Eigen::MatrixXd getNeighbors(Eigen::MatrixXd new_node, int nearest_node_ind);
-	int obstacle_collision(Eigen::MatrixXd new_node, int nearest_node_ind, Eigen::MatrixXd obs_position);
-	int obstacle_collision(Eigen::MatrixXd new_node, Eigen::MatrixXd goal_node, Eigen::MatrixXd obs_position);
-	float link_obstacle_collision(Eigen::MatrixXd P1, Eigen::MatrixXd P2, Eigen::MatrixXd obstacle);
-	int insert_node(Eigen::MatrixXd new_node, int nearest_node_ind);
-	void find_path(int new_node_ind);
+	int obstacleCollision(Eigen::MatrixXd new_node, int nearest_node_ind, Eigen::MatrixXd obs_position);
+	int obstacleCollision(Eigen::MatrixXd new_node, Eigen::MatrixXd goal_node, Eigen::MatrixXd obs_position);
+	float linkObstacleCollision(Eigen::MatrixXd P1, Eigen::MatrixXd P2, Eigen::MatrixXd obstacle);
+	int insertNode(Eigen::MatrixXd new_node, int nearest_node_ind);
+	void findPath(int new_node_ind);
 };
 
 #endif /* MANIPULATOR_H_ */
