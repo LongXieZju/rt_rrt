@@ -169,7 +169,7 @@ Eigen::MatrixXd Manipulator::sampleNode(){
 //	std::cout << "****rand_node****" << std::endl;
 //	std::cout << (double)rand()/RAND_MAX << std::endl;
 	if((double)rand()/RAND_MAX < Manipulator::goal_bais){
-		state = Manipulator::goal_angle;
+		state = Manipulator::goal_angle + Eigen::MatrixXd::Random(Manipulator::link_num, 1) * Manipulator::node_max_step;
 	}else{
 		Eigen::MatrixXd step = Manipulator::max_ang - Manipulator::min_ang;
 		Eigen::MatrixXd random = (Eigen::MatrixXd::Random(Manipulator::link_num, 1)
@@ -227,12 +227,14 @@ int Manipulator::obstacleCollision(Eigen::MatrixXd new_node, int nearest_node_in
 		for(int j = 1; j <= Manipulator::step_div; j++){
 			state_angle = nearest_node + j*step*vector;
 			joint_position = Manipulator::fkine(state_angle);
+//			std::cout << "****joint_position****" << std::endl;
+//			std::cout << joint_position << std::endl;
 			ob_dist(0,0) = Manipulator::linkObstacleCollision(joint_position.col(0), joint_position.col(1), obs_position.col(i));
 			ob_dist(1,0) = Manipulator::linkObstacleCollision(joint_position.col(1), joint_position.col(2), obs_position.col(i));
 			ob_dist(2,0) = Manipulator::linkObstacleCollision(joint_position.col(2), joint_position.col(3), obs_position.col(i));
 //			std::cout << "****obs_dist****" << std::endl;
 //			std::cout << ob_dist.minCoeff() - Manipulator::arm_radius - Manipulator::obs_radius[i] << std::endl;
-			collision = collision = (ob_dist.minCoeff() - Manipulator::arm_radius - Manipulator::obs_radius[i]) > 0;
+			collision = (ob_dist.minCoeff() - Manipulator::arm_radius - Manipulator::obs_radius[i]) > 0;
 			if(!collision){
 				return collision;
 			}
@@ -245,8 +247,13 @@ float Manipulator::linkObstacleCollision(Eigen::MatrixXd P1, Eigen::MatrixXd P2,
 	Eigen::MatrixXd a1 = obstacle - P1;
 	Eigen::MatrixXd a2 = P2 - P1;
 	Eigen::MatrixXd close_P(3, 1);
-	float k = (a1 * a2.transpose())(0,0) / a2.norm();
-//	float k = 0;
+//	std::cout << "****a1****" << std::endl;
+//	std::cout << a1 << std::endl;
+//	std::cout << "****a2****" << std::endl;
+//	std::cout << a2 << std::endl;
+//	std::cout << "****dot(a1, a2)****" << std::endl;
+//	std::cout << a1.transpose() * a2 << std::endl;
+	float k = (a1.transpose() * a2)(0, 0) / a2.norm();
 	if(k <= 0){
 		close_P = P1;
 	}else if(k >= 1){

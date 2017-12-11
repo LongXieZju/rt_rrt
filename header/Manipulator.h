@@ -26,7 +26,7 @@ public:
 	float arm_radius;
 	float goal_bais;
 	float node_max_step;
-	float obs_radius[3] = {0.11, 0.12, 0.07};
+	float obs_radius[3] = {0.11, 0.2, 0.07};
 	std::stack<int> back_trace;
 
 	Eigen::MatrixXd goal_position;

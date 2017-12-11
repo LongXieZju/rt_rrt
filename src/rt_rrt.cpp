@@ -34,7 +34,7 @@ int main(){
 	C = (A.array()>0).select(A,0);
 //	C.select(A, 0);
 	Eigen::MatrixXd D;
-	std::cout <<  C << std::endl;
+	std::cout <<  A.norm() << std::endl;
 	std::cout <<  ((A.array() == 3).select(A, B)) << std::endl;
 	std::cout << "********" << std::endl;
 	std::cout <<  (A.array() > 0).matrix()(1,1) << std::endl;
@@ -83,7 +83,7 @@ int main(){
 	NearestNode nearest_node;
 	int new_node_ind;
 
-
+//	v.simStart();
 	clock_t start_jacob = clock();
 	int count = 0;
 	for(int i = 0; i < seven_arm.max_iter; i++){
@@ -93,6 +93,9 @@ int main(){
 		if(nearest_node.nearest_dist > seven_arm.node_max_step){
 			new_node = seven_arm.steer(new_node, nearest_node.ind);
 		}
+
+//		v_arm.setJointPos(new_node - seven_arm.start_angle);
+
 		if(seven_arm.obstacleCollision(new_node, nearest_node.ind, obs_position)){
 			new_node_ind = seven_arm.insertNode(new_node, nearest_node.ind);
 			if((new_node - seven_arm.goal_angle).norm() < seven_arm.node_max_step){
@@ -120,8 +123,10 @@ int main(){
 		v_arm.setJointPos(joint_angle - seven_arm.start_angle);
 //		std::cout << seven_arm.back_trace.top() << " " << std::endl;
 		seven_arm.back_trace.pop();
-		v.simSleep(1);
+		v.simSleep(200);
 	}
+	v_arm.setJointPos(seven_arm.goal_angle - seven_arm.start_angle);
+	v.simSleep(1000);
 	v.simStop();
 //	std::cout << "****tree****" << std::endl;
 //	std::cout << seven_arm.tree.leftCols(10) << std::endl;
