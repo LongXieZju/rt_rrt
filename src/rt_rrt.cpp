@@ -23,7 +23,29 @@ Eigen::MatrixXd getObstaclesPos(int* obstacles, VREP v){
 }
 
 int main(){
-//	srand((unsigned)time(0));  //random sample differently every time
+	srand((unsigned)time(0));  //random sample differently every time
+
+	///test
+	Eigen::MatrixXd A(3,2);
+	A << -2,2,3,4,5,6;
+	Eigen::MatrixXd* B = &A;
+	Eigen::MatrixXd C(3,1);
+	C << 1,2,3;
+	float D = 5.1;
+//	C.select(A, 0);
+	float E = D - A(0,0);
+	Eigen::MatrixXd M(7, 1);
+	Eigen::MatrixXd tree = Eigen::MatrixXd::Random(7, 10000);
+	std::cout << "********" << std::endl;
+	std::cout <<  A << std::endl;
+	std::cout << "********" << std::endl;
+	std::cout <<  E << std::endl;
+	std::cout << "********" << std::endl;
+	std::cout <<  *B << std::endl;
+	std::cout << "********" << std::endl;
+
+//	std::cout <<  (A.array() > 0).matrix()(1,1) << std::endl;
+	///
 
 	// Manipulator model, contains forward and backward kinematics models
 	Eigen::MatrixXd manipulator_dh(7,4);
@@ -68,38 +90,33 @@ int main(){
 	NearestNode nearest_node;
 	int new_node_ind;
 
-	///test
-//	Eigen::MatrixXd A(3,2);
-//	A << -2,2,3,4,5,6;
-//	int adad = A.minCoeff() > 0;
-//	std::cout << adad << std::endl;
-	///
-	clock_t start_jacob = clock();
+//	v.simStart();
 	int count = 0;
+	clock_t start_jacob = clock();
 	for(int i = 0; i < seven_arm.max_iter; i++){
 		count++;
 		new_node = seven_arm.sampleNode();
-		nearest_node = seven_arm.getNearestNode(new_node);
+		seven_arm.getNearestNode(new_node, &nearest_node);
 		if(nearest_node.nearest_dist > seven_arm.node_max_step){
 			new_node = seven_arm.steer(new_node, nearest_node.ind);
 		}
-		if(seven_arm.obstacle_collision(new_node, nearest_node.ind, obs_position)){
-			new_node_ind = seven_arm.insert_node(new_node, nearest_node.ind);
+		if(seven_arm.obstacleCollision(new_node, nearest_node.ind, obs_position)){
+			new_node_ind = seven_arm.insertNode(new_node, nearest_node.ind);
 			if((new_node - seven_arm.goal_angle).norm() < seven_arm.node_max_step){
-				if(seven_arm.obstacle_collision(new_node, seven_arm.goal_angle, obs_position)){
+				if(seven_arm.obstacleCollision(new_node, seven_arm.goal_angle, obs_position)){
 					std::cout << "Find path" << std::endl;
-					seven_arm.find_path(new_node_ind);
+					seven_arm.findPath(new_node_ind);
 					break;
 				}
 			}
 		}
 	}
 	clock_t ends_jacob = clock();
+	std::cout <<"RRT Running Time : "<<(double)(ends_jacob - start_jacob)/ CLOCKS_PER_SEC << std::endl;
 	std::cout << "****iterations****" << std::endl;
-		std::cout << count << " " << "Nodes" << std::endl;
+	std::cout << count << " " << "Nodes" << std::endl;
 	std::cout << "****node_added****" << std::endl;
 	std::cout << seven_arm.node_added << " " << "Nodes" << std::endl;
-	std::cout <<"RRT Running Time : "<<(double)(ends_jacob - start_jacob)/ CLOCKS_PER_SEC << std::endl;
 	std::cout << "****path****" << std::endl;
 	int path_ind;
 	Eigen::MatrixXd joint_angle(7, 1);
@@ -110,8 +127,10 @@ int main(){
 		v_arm.setJointPos(joint_angle - seven_arm.start_angle);
 //		std::cout << seven_arm.back_trace.top() << " " << std::endl;
 		seven_arm.back_trace.pop();
-		v.simSleep(1);
+		v.simSleep(100);
 	}
+	v_arm.setJointPos(seven_arm.goal_angle - seven_arm.start_angle);
+	v.simSleep(1000);
 	v.simStop();
 //	std::cout << "****tree****" << std::endl;
 //	std::cout << seven_arm.tree.leftCols(10) << std::endl;
