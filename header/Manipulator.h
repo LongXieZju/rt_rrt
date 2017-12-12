@@ -20,13 +20,15 @@ private:
 public:
 	int link_num;
 	int max_iter;
-	int node_added;
 	int step_div;
+	int node_added;
 	int obstacle_num;
 	float arm_radius;
 	float goal_bais;
 	float node_max_step;
-	float obs_radius[3] = {0.11, 0.2, 0.07};
+	float obs_radius[3] = {0.05, 0.1, 0.07};
+//	float obs_radius[3] = {0.11, 0.2, 0.07};
+	float link_length[3] = {0.29126, 0.32363, 0.15512};
 	std::stack<int> back_trace;
 
 	Eigen::MatrixXd goal_position;
@@ -55,11 +57,13 @@ public:
 
 	Eigen::MatrixXd sampleNode();
 	Eigen::MatrixXd steer(Eigen::MatrixXd new_node, int nearest_node_ind);
-	NearestNode getNearestNode(Eigen::MatrixXd node);
+	void getNearestNode(Eigen::MatrixXd node, NearestNode* nearest_node);
+	NearestNode getNearestNode(Eigen::MatrixXd node, int* node_added);
 	Eigen::MatrixXd getNeighbors(Eigen::MatrixXd new_node, int nearest_node_ind);
+//	int obstacleCollision(Eigen::MatrixXd new_node, int nearest_node_ind, Eigen::MatrixXd obs_position);
 	int obstacleCollision(Eigen::MatrixXd new_node, int nearest_node_ind, Eigen::MatrixXd obs_position);
 	int obstacleCollision(Eigen::MatrixXd new_node, Eigen::MatrixXd goal_node, Eigen::MatrixXd obs_position);
-	float linkObstacleCollision(Eigen::MatrixXd P1, Eigen::MatrixXd P2, Eigen::MatrixXd obstacle);
+//	float linkObstacleCollision(Eigen::MatrixXd P1, Eigen::MatrixXd P2, Eigen::MatrixXd obstacle);
 	int insertNode(Eigen::MatrixXd new_node, int nearest_node_ind);
 	void findPath(int new_node_ind);
 };
