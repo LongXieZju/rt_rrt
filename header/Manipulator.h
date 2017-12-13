@@ -9,6 +9,8 @@
 #define MANIPULATOR_H_
 
 #include "../header/Struct.h"
+//#include <flann/flann.hpp>
+//#include <flann/io/hdf5.h>
 #include <stack>
 
 class Manipulator{
@@ -23,6 +25,7 @@ public:
 	int step_div;
 	int node_added;
 	int obstacle_num;
+	int root_node;
 	float arm_radius;
 	float goal_bais;
 	float node_max_step;
@@ -66,6 +69,11 @@ public:
 //	float linkObstacleCollision(Eigen::MatrixXd P1, Eigen::MatrixXd P2, Eigen::MatrixXd obstacle);
 	int insertNode(Eigen::MatrixXd new_node, int nearest_node_ind);
 	void findPath(int new_node_ind);
+
+	void chooseParent(Eigen::MatrixXd& new_node, Eigen::MatrixXd& neighbor_nodes, int& nearest_node_ind, Eigen::MatrixXd& obs_position);
+	void rewire(Eigen::MatrixXd& new_node, Eigen::MatrixXd& neighbor_nodes, Eigen::MatrixXd& obs_position);
+	double sumCost(double& nearest_node_ind, int& sum_cost);
+	double sumCost(int& nearest_node_ind, int& sum_cost);
 };
 
 #endif /* MANIPULATOR_H_ */

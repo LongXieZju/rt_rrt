@@ -7,7 +7,6 @@
 #include <iostream>
 #include <eigen3/Eigen/Geometry>
 #include "../header/VREP.h"
-
 extern "C" {
     #include "extApi.h"
 	#include "extApi.c"

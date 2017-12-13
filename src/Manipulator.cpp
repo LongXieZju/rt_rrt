@@ -55,6 +55,7 @@ void Manipulator::setStartState(Eigen::MatrixXd joint_angle){
 	Manipulator::start_angle = joint_angle;
 	Manipulator::tree.col(0) = joint_angle;
 	Manipulator::node_added = 1;
+	Manipulator::root_node = 0;
 }
 
 Eigen::MatrixXd Manipulator::jacob(Eigen::MatrixXd joint_angle){
@@ -365,7 +366,7 @@ int Manipulator::insertNode(Eigen::MatrixXd new_node, int nearest_node_ind){
 void Manipulator::findPath(int nearest_node_index){
 	int current_index = nearest_node_index;
 	int path_iter = 0;
-	while(current_index != 0 ){
+	while(current_index != Manipulator::root_node ){
 		Manipulator::back_trace.push(current_index);
 		path_iter = path_iter + 1;
 		current_index = Manipulator::parent(current_index, 0);
@@ -373,3 +374,63 @@ void Manipulator::findPath(int nearest_node_index){
 	Manipulator::back_trace.push(current_index);
 }
 
+void Manipulator::chooseParent(Eigen::MatrixXd& new_node, Eigen::MatrixXd& neighbor_nodes, int& nearest_node_ind, Eigen::MatrixXd& obs_position){
+	int sum_cost;
+	int parent;
+	float min_cost = Manipulator::sumCost(nearest_node_ind, sum_cost) + (Manipulator::tree.col(nearest_node_ind) - new_node).norm();
+	float temp_cost;
+	for(int i = 0; i < neighbor_nodes.cols(); ++i){
+		if(Manipulator::obstacleCollision(new_node, neighbor_nodes(0, i), obs_position)){
+			sum_cost = 0;
+			temp_cost = Manipulator::sumCost(neighbor_nodes(0, i), sum_cost) + (Manipulator::tree.col(neighbor_nodes(0, i)) - new_node).norm();
+			if(temp_cost < min_cost){
+				min_cost = temp_cost;
+				parent = neighbor_nodes(0, i);
+			}
+		}
+	}
+	//insertNode
+	Manipulator::tree.col(Manipulator::node_added) = new_node;
+	Manipulator::parent(0, Manipulator::node_added) = parent;
+	Manipulator::sum_cost(0, Manipulator::node_added) = min_cost;
+	Manipulator::children(0, parent) += 1;
+	Manipulator::node_added = Manipulator::node_added + 1;
+}
+
+void Manipulator::rewire(Eigen::MatrixXd& new_node, Eigen::MatrixXd& neighbor_nodes, Eigen::MatrixXd& obs_position){
+	int new_node_ind = Manipulator::node_added - 1;
+	int sum_cost;
+	int parent;
+	float temp_cost;
+	for(int i = 0; i < neighbor_nodes.cols(); ++i){
+		if(Manipulator::obstacleCollision(new_node, neighbor_nodes(0, i), obs_position)){
+			temp_cost = Manipulator::sum_cost(0, new_node_ind) + (Manipulator::tree.col(neighbor_nodes(0, i)) - new_node).norm();
+			if(temp_cost < Manipulator::sum_cost(0, neighbor_nodes(0, i))){
+				Manipulator::sum_cost(0, neighbor_nodes(0, i)) = temp_cost;
+				Manipulator::children(0, new_node_ind) += 1;
+				Manipulator::children(0, Manipulator::parent(0, neighbor_nodes(0, i))) -= 1;
+				Manipulator::parent(0, neighbor_nodes(0, i)) = new_node_ind;
+			}
+		}
+	}
+}
+
+double Manipulator::sumCost(int& nearest_node_ind, int& sum_cost){
+	int current_index = nearest_node_ind;
+	while(current_index != Manipulator::root_node){
+		sum_cost += (Manipulator::tree.col(current_index) - Manipulator::tree.col(Manipulator::parent(current_index, 0))).norm();
+		current_index = Manipulator::parent(current_index, 0);
+	}
+	Manipulator::sum_cost(0, nearest_node_ind) = sum_cost;
+	return sum_cost;
+}
+
+double Manipulator::sumCost(double& nearest_node_ind, int& sum_cost){
+	int current_index = nearest_node_ind;
+	while(current_index != Manipulator::root_node){
+		sum_cost += (Manipulator::tree.col(current_index) - Manipulator::tree.col(Manipulator::parent(current_index, 0))).norm();
+		current_index = Manipulator::parent(current_index, 0);
+	}
+	Manipulator::sum_cost(0, nearest_node_ind) = sum_cost;
+	return sum_cost;
+}

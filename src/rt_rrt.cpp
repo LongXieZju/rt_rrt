@@ -26,24 +26,10 @@ int main(){
 	srand((unsigned)time(0));  //random sample differently every time
 
 	///test
-	Eigen::MatrixXd A(3,2);
-	A << -2,2,3,4,5,6;
-	Eigen::MatrixXd* B = &A;
-	Eigen::MatrixXd C(3,1);
-	C << 1,2,3;
-	float D = 5.1;
-//	C.select(A, 0);
-	float E = D - A(0,0);
-	Eigen::MatrixXd M(7, 1);
-	Eigen::MatrixXd tree = Eigen::MatrixXd::Random(7, 10000);
-	std::cout << "********" << std::endl;
-	std::cout <<  A << std::endl;
-	std::cout << "********" << std::endl;
-	std::cout <<  E << std::endl;
-	std::cout << "********" << std::endl;
-	std::cout <<  *B << std::endl;
-	std::cout << "********" << std::endl;
-
+//	Eigen::MatrixXd mat = Eigen::MatrixXd::Random(2,3);
+//	flann::Matrix source;
+//	flann::KDTreeIndexParams params(4);
+//	flann::Index tree_index(source, params);
 //	std::cout <<  (A.array() > 0).matrix()(1,1) << std::endl;
 	///
 
@@ -87,6 +73,7 @@ int main(){
 
 	//RRT
 	Eigen::MatrixXd new_node(seven_arm.link_num,1);
+	Eigen::MatrixXd neighbor_nodes;
 	NearestNode nearest_node;
 	int new_node_ind;
 
@@ -101,7 +88,10 @@ int main(){
 			new_node = seven_arm.steer(new_node, nearest_node.ind);
 		}
 		if(seven_arm.obstacleCollision(new_node, nearest_node.ind, obs_position)){
+//			seven_arm.neighbors(new_node, &neighbor_nodes);
+//			seven_arm.chooseParent(new_node, neighbor_nodes, nearest_node_ind);
 			new_node_ind = seven_arm.insertNode(new_node, nearest_node.ind);
+//			seven_arm.rewire();
 			if((new_node - seven_arm.goal_angle).norm() < seven_arm.node_max_step){
 				if(seven_arm.obstacleCollision(new_node, seven_arm.goal_angle, obs_position)){
 					std::cout << "Find path" << std::endl;
@@ -125,15 +115,12 @@ int main(){
 		path_ind = seven_arm.back_trace.top();
 		joint_angle = seven_arm.tree.col(path_ind);
 		v_arm.setJointPos(joint_angle - seven_arm.start_angle);
-//		std::cout << seven_arm.back_trace.top() << " " << std::endl;
 		seven_arm.back_trace.pop();
 		v.simSleep(100);
 	}
 	v_arm.setJointPos(seven_arm.goal_angle - seven_arm.start_angle);
 	v.simSleep(1000);
 	v.simStop();
-//	std::cout << "****tree****" << std::endl;
-//	std::cout << seven_arm.tree.leftCols(10) << std::endl;
 	return 0;
 
 }
